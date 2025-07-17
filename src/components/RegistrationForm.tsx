@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,16 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Car, Phone, User, FileText } from "lucide-react";
-
-export interface FielData {
-  id: string;
-  nomeCompleto: string;
-  telefone: string;
-  marcaCarro: string;
-  modeloCarro: string;
-  matricula: string;
-  registeredAt: string;
-}
 
 const RegistrationForm = () => {
   const { toast } = useToast();
@@ -32,25 +21,21 @@ const RegistrationForm = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      // Save to localStorage for demo purposes
-      const existingData = JSON.parse(localStorage.getItem("fieis") || "[]");
-      const newFiel: FielData = {
-        id: Date.now().toString(),
-        ...formData,
-        registeredAt: new Date().toISOString()
-      };
-      
-      existingData.push(newFiel);
-      localStorage.setItem("fieis", JSON.stringify(existingData));
+    try {
+      await fetch("https://script.google.com/macros/s/AKfycbxWOkRjJ2Tne3Xv0-3QOW3t5O0QKgOkjaLWp6n6bSC8P6dfzan9aocg2LLZk07rbLu8dA/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
 
       toast({
         title: "Registro realizado com sucesso!",
-        description: "Seus dados foram salvos. Tenha um culto abençoado!",
+        description: "Seus dados foram enviados para a planilha. Tenha um culto abençoado!",
       });
 
-      // Reset form
       setFormData({
         nomeCompleto: "",
         telefone: "",
@@ -58,9 +43,15 @@ const RegistrationForm = () => {
         modeloCarro: "",
         matricula: ""
       });
+    } catch (error) {
+      toast({
+        title: "Erro ao registrar",
+        description: "Verifique sua conexão ou tente mais tarde.",
+        variant: "destructive"
+      });
+    }
 
-      setIsLoading(false);
-    }, 1000);
+    setIsLoading(false);
   };
 
   const handleChange = (field: string, value: string) => {
@@ -118,7 +109,7 @@ const RegistrationForm = () => {
             />
           </div>
 
-          {/* Marca do Carro */}
+          {/* Marca e Modelo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="marcaCarro" className="text-sm font-medium text-gray-700">
@@ -135,7 +126,6 @@ const RegistrationForm = () => {
               />
             </div>
 
-            {/* Modelo do Carro */}
             <div className="space-y-2">
               <Label htmlFor="modeloCarro" className="text-sm font-medium text-gray-700">
                 Modelo do Carro
@@ -169,7 +159,7 @@ const RegistrationForm = () => {
             />
           </div>
 
-          {/* Submit Button */}
+          {/* Botão */}
           <Button 
             type="submit" 
             disabled={isLoading}
@@ -184,3 +174,12 @@ const RegistrationForm = () => {
 };
 
 export default RegistrationForm;
+
+
+
+
+    
+     
+   
+       
+     
