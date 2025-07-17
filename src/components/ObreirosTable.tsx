@@ -1,254 +1,193 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Shield, Mail, Key } from "lucide-react";
+
+import { useState } from "react";
+import { Eye, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import ObreirosTable from "@/components/ObreirosTable";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import FielDetailsModal from "@/components/FielDetailsModal";
 import { FielData } from "@/components/RegistrationForm";
 
-const Obreiros = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loginData, setLoginData] = useState({
-    email: "",
-    codigo: ""
-  });
-  const [fieis, setFieis] = useState<FielData[]>([]);
-  const [loading, setLoading] = useState(true); // Novo estado para controle de carregamento
-  const [error, setError] = useState<string | null>(null); // Novo estado para erros
+interface ObreirosTableProps {
+  fieis: FielData[];
+}
 
-  const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxWOkRjJ2Tne3Xv0-3QOW3t5O0QKgOkjaLWp6n6bSC8P6dfzan9aocg2LLZk07rbLu8dA/exec"; 
+const ObreirosTable = ({ fieis }: ObreirosTableProps) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState<string>("all");
+  const [selectedFiel, setSelectedFiel] = useState<FielData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(( ) => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(GOOGLE_SHEETS_API_URL);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data: FielData[] = await response.json();
-        setFieis(data);
-      } catch (err) {
-        console.error("Erro ao buscar dados do Google Sheets:", err);
-        setError("Não foi possível carregar os dados. Tente novamente mais tarde.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (isAuthenticated) { // Buscar dados apenas se autenticado
-      fetchData();
-    }
-  }, [isAuthenticated]); // Dependência para re-executar quando a autenticação mudar
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Filtros
+  const filteredFieis = fieis.filter(fiel => {
+    const matchesSearch = searchTerm === "" || 
+      fiel.nomeCompleto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fiel.modeloCarro.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fiel.matricula.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Simulate authentication (in real app, this would be handled by backend)
-    if (loginData.email === "seu@email.com" && loginData.codigo === "123") { // Exemplo de credenciais
-      setIsAuthenticated(true);
-    } else {
-      alert("Credenciais inválidas!");
-    }
+    const matchesBrand = selectedBrand === "all" || 
+      fiel.marcaCarro.toLowerCase() === selectedBrand.toLowerCase();
+    
+    return matchesSearch && matchesBrand;
+  });
+
+  // Marcas únicas para o dropdown
+  const uniqueBrands = Array.from(new Set(fieis.map(fiel => fiel.marcaCarro)));
+
+  const handleViewDetails = (fiel: FielData) => {
+    setSelectedFiel(fiel);
+    setIsModalOpen(true);
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setLoginData({ email: "", codigo: "" });
-    setFieis([]); // Limpar dados ao deslogar
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-PT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-        <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <Button 
-              asChild 
-              variant="ghost" 
-              className="mb-6 text-gray-600 hover:text-gray-800"
-            >
-              <Link to="/" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Voltar ao Início
-              </Link>
-            </Button>
-            
-            <div className="text-center">
-              <div className="flex justify-center items-center gap-3 mb-4">
-                <Shield className="h-10 w-10 text-church-600" />
-                <h1 className="text-3xl font-bold text-gray-800">
-                  Área dos Obreiros
-                </h1>
-              </div>
-              <p className="text-gray-600">
-                Acesso restrito para administração do vallet parking
-              </p>
-            </div>
-          </div>
-
-          {/* Login Form */}
-          <div className="max-w-md mx-auto">
-            <Card className="shadow-xl border-gray-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-xl font-semibold text-gray-800">
-                  Fazer Login
-                </CardTitle>
-                <CardDescription>
-                  Insira suas credenciais para acessar o painel administrativo
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      E-mail
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                      className="h-12 bg-white border-gray-300 focus:border-church-500 focus:ring-church-500"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="codigo" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Key className="h-4 w-4" />
-                      Código de Acesso
-                    </Label>
-                    <Input
-                      id="codigo"
-                      type="password"
-                      placeholder="Digite o código"
-                      value={loginData.codigo}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, codigo: e.target.value }))}
-                      required
-                      className="h-12 bg-white border-gray-300 focus:border-church-500 focus:ring-church-500"
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 bg-church-600 hover:bg-church-700 text-white font-semibold"
-                  >
-                    Entrar
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Shield className="h-8 w-8 text-church-600" />
-              <h1 className="text-3xl font-bold text-gray-800">
-                Dashboard - Vallet Parking
-              </h1>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Registros de Veículos
+          </CardTitle>
+          <CardDescription>
+            Lista completa dos veículos registrados pelos fiéis
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          {/* Filtros */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Pesquisar por nome, modelo ou matrícula..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
-            <p className="text-gray-600">
-              Gerencie os registros de veículos dos fiéis
-            </p>
-          </div>
-          
-          <div className="flex gap-3">
-            <Button 
-              asChild 
-              variant="outline"
-              className="border-gray-300"
-            >
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Início
-              </Link>
-            </Button>
             
-            <Button 
-              onClick={handleLogout}
-              variant="outline"
-              className="border-red-300 text-red-600 hover:bg-red-50"
-            >
-              Sair
-            </Button>
+            <div className="w-full sm:w-48">
+              <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por marca" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as marcas</SelectItem>
+                  {uniqueBrands.map(brand => (
+                    <SelectItem key={brand} value={brand}>
+                      {brand}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total de Veículos</p>
-                  <p className="text-3xl font-bold text-church-600">{fieis.length}</p>
-                </div>
-                <div className="h-12 w-12 bg-church-100 rounded-lg flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-church-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Hoje</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {fieis.filter(fiel => {
-                      const today = new Date().toDateString();
-                      const fielDate = new Date(fiel.registeredAt).toDateString();
-                      return today === fielDate;
-                    }).length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Marcas Únicas</p>
-                  <p className="text-3xl font-bold text-blue-600">
-                    {new Set(fieis.map(fiel => fiel.marcaCarro.toLowerCase())).size}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          {/* Tabela */}
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Telefone</TableHead>
+                  <TableHead>Marca</TableHead>
+                  <TableHead>Modelo</TableHead>
+                  <TableHead>Matrícula</TableHead>
+                  <TableHead>Registrado em</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredFieis.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      {fieis.length === 0 
+                        ? "Nenhum registro encontrado" 
+                        : "Nenhum resultado para os filtros aplicados"
+                      }
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredFieis.map((fiel, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{fiel.nomeCompleto}</TableCell>
+                      <TableCell>{fiel.telefone}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="bg-church-100 text-church-800">
+                          {fiel.marcaCarro}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{fiel.modeloCarro}</TableCell>
+                      <TableCell className="font-mono font-bold bg-gray-100 px-2 py-1 rounded">
+                        {fiel.matricula}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {formatDate(fiel.registradoEm)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDetails(fiel)}
+                          className="flex items-center gap-2"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Ver info
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-        {/* Table */}
-        <ObreirosTable fieis={fieis} />
-      </div>
-    </div>
+          {/* Estatísticas */}
+          {filteredFieis.length > 0 && (
+            <div className="mt-4 text-sm text-gray-600">
+              Mostrando {filteredFieis.length} de {fieis.length} registros
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Modal */}
+      <FielDetailsModal
+        fiel={selectedFiel}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedFiel(null);
+        }}
+      />
+    </>
   );
 };
 
-export default Obreiros;
-
+export default ObreirosTable;

@@ -15,8 +15,7 @@ import {
   Car, 
   FileText, 
   Calendar, 
-  Send,
-  MapPin 
+  Send 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { FielData } from "./RegistrationForm";
@@ -133,7 +132,7 @@ const FielDetailsModal = ({ fiel, isOpen, onClose }: FielDetailsModalProps) => {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600">Registrado em</p>
-                <p className="text-sm font-semibold text-gray-900">{formatDate(fiel.registeredAt)}</p>
+                <p className="text-sm font-semibold text-gray-900">{formatDate(fiel.registradoEm)}</p>
               </div>
             </div>
           </div>

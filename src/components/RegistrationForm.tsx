@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,6 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Car, Phone, User, FileText } from "lucide-react";
+
+export interface FielData {
+  registradoEm: string;
+  nomeCompleto: string;
+  telefone: string;
+  marcaCarro: string;
+  modeloCarro: string;
+  matricula: string;
+}
 
 const RegistrationForm = () => {
   const { toast } = useToast();
@@ -174,12 +184,3 @@ const RegistrationForm = () => {
 };
 
 export default RegistrationForm;
-
-
-
-
-    
-     
-   
-       
-     
